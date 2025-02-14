@@ -75,7 +75,7 @@ function library:ToggleGUI()
     end
 end
 
-inputService.InputBegan:Connect(function(input, gameProcessed)
+inputService.InputBegan:connect(function(input, gameProcessed)
     if input.KeyCode == Enum.KeyCode.RightShift and not gameProcessed then
         library:ToggleGUI()
     end
