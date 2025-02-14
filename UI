@@ -5,43 +5,41 @@ local library = {
 local dragger = {};
 local resizer = {};
 
-do
-    local mouse = game:GetService("Players").LocalPlayer:GetMouse();
-    local inputService = game:GetService('UserInputService');
-    local heartbeat = game:GetService("RunService").Heartbeat;
+local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+local inputService = game:GetService('UserInputService')
+local heartbeat = game:GetService("RunService").Heartbeat
 
-    function dragger.new(frame)
-        local s, event = pcall(function()
-            return frame.MouseEnter
-        end)
+function dragger.new(frame)
+    local s, event = pcall(function()
+        return frame.MouseEnter
+    end)
 
-        if s then
-            frame.Active = true;
+    if s then
+        frame.Active = true
 
-            event:connect(function()
-                local input = frame.InputBegan:connect(function(key)
-                    if key.UserInputType == Enum.UserInputType.MouseButton1 then
-                        local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y);
-                        while heartbeat:wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                            frame:TweenPosition(UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 'Out', 'Quad', 0.1, true);
-                        end
+        event:Connect(function()
+            local input = frame.InputBegan:Connect(function(key)
+                if key.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y)
+                    while heartbeat:Wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        frame:TweenPosition(UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 'Out', 'Quad', 0.1, true)
                     end
-                end)
-
-                local leave;
-                leave = frame.MouseLeave:connect(function()
-                    input:disconnect();
-                    leave:disconnect();
-                end)
+                end
             end)
-        end
-    end
 
-    function resizer.new(p, s)
-        p:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
-            s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
+            local leave
+            leave = frame.MouseLeave:Connect(function()
+                input:Disconnect()
+                leave:Disconnect()
+            end)
         end)
     end
+end
+
+function resizer.new(p, s)
+    p:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
+        s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y)
+    end)
 end
 
 local defaults = {
@@ -52,14 +50,14 @@ local defaults = {
 }
 
 function library:Create(class, props)
-    local object = Instance.new(class);
+    local object = Instance.new(class)
     for i, prop in next, props do
         if i ~= "Parent" then
-            object[i] = prop;
+            object[i] = prop
         end
     end
-    object.Parent = props.Parent;
-    return object;
+    object.Parent = props.Parent
+    return object
 end
 
 function library:RemoveGUI()
@@ -75,20 +73,31 @@ function library:ToggleGUI()
     end
 end
 
+inputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.RightShift and not gameProcessed then
+        if library.gui then
+            library:ToggleGUI()
+        end
+    end
+end)
+
 function library:CreateWindow(options)
-    assert(options.text, "no name");
+    assert(options.text, "no name")
     local window = {
         count = 0;
         toggles = {},
         closed = false;
     }
 
-    local options = options or {};
+    local options = options or {}
     setmetatable(options, {__index = defaults})
 
-    self.windowcount = self.windowcount + 1;
+    self.windowcount = self.windowcount + 1
 
-    library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
+    if not library.gui then
+        library.gui = self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
+    end
+
     window.frame = self:Create("Frame", {
         Name = options.text;
         Parent = self.gui,
@@ -153,9 +162,9 @@ function library:CreateWindow(options)
         TextColor3 = options.txtcolor,
         Font = Enum.Font.SourceSans;
         Parent = window.frame,
-    });
+    })
 
-    togglebutton.MouseButton1Click:connect(function()
+    togglebutton.MouseButton1Click:Connect(function()
         window.closed = not window.closed
         togglebutton.Text = (window.closed and "+" or "-")
         if window.closed then
@@ -181,11 +190,5 @@ function library:CreateWindow(options)
 
     return window
 end
-
-inputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.RightShift and not gameProcessed then
-        library:ToggleGUI()
-    end
-end)
 
 return library
